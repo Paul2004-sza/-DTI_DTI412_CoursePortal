@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # DTI412 Lab 2 - CoursePortal (Django MVT)
 
 ```bash
@@ -15,3 +16,6 @@ Git submission:
 git init && git checkout -b feature/django-mvt-lab
 git add . && git commit -m "feat: complete Django MVT lab"
 ```
+=======
+# -DTI_DTI412_CoursePortal
+>>>>>>> 4f64e5e6d84020becec2d8360ad5bb9e7dee845b
