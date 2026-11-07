@@ -1,0 +1,245 @@
+{% extends 'catalog/base.html' %}
+
+{% block title %}All Courses - DTI CoursePortal{% endblock %}
+
+{% block extra_head %}
+<style>
+    .course-banner { height: 8px; border-radius: 1.1rem 1.1rem 0 0; }
+    .course-banner.c1 { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+    .course-banner.c2 { background: linear-gradient(90deg, #0ea5e9, #06b6d4); }
+    .course-banner.c0 { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .save-btn { border: 0; background: transparent; font-size: 1.25rem; color: var(--bs-secondary-color); transition: transform .2s, color .2s; }
+    .save-btn:hover { transform: scale(1.2); color: #f59e0b; }
+    .save-btn.saved { color: #f59e0b; }
+    .chip-filter { border-radius: 2rem; font-weight: 600; }
+    #courseGrid.list-view .course-col { flex: 0 0 100%; max-width: 100%; }
+    #courseGrid.list-view .course-card { flex-direction: row; align-items: center; }
+    #courseGrid.list-view .course-card > div { border: 0 !important; }
+    #courseGrid.list-view .course-card .card-body { flex: 1; }
+    @media (max-width: 767px) { #courseGrid.list-view .course-card { flex-direction: column; } }
+    mark.hl { background: #fde68a; color: #1f2937; padding: 0 .15rem; border-radius: .25rem; }
+    .course-col.pop { animation: pop .35s ease; }
+    @keyframes pop { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
+    <div>
+        <h1 class="fw-bold mb-1">Offered IT <span class="text-brand">Courses</span></h1>
+        <div class="text-body-secondary">Type to filter instantly, save favourites with the star, or press Enter to search on the server.</div>
+    </div>
+    <span class="badge bg-brand rounded-pill fs-6 px-3 py-2"><span id="countNum">{{ courses|length }}</span> Courses Available</span>
+</div>
+
+<form method="GET" action="{% url 'catalog:course_list' %}" class="bg-body rounded-xl shadow-sm p-3 mb-3" id="searchForm">
+    <div class="row g-2 align-items-center">
+        <div class="col-lg-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" id="liveSearch" value="{{ query }}" class="form-control" placeholder="Search by course title or code (press / to focus)" autocomplete="off">
+                {% if query %}<a href="{% url 'catalog:course_list' %}" class="btn btn-outline-secondary" title="Clear search"><i class="bi bi-x-lg"></i></a>{% endif %}
+                <button type="submit" class="btn btn-brand px-4">Search</button>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <select id="sortSelect" class="form-select" aria-label="Sort courses">
+                <option value="default">Sort: Default</option>
+                <option value="title">Title (A to Z)</option>
+                <option value="code">Course code</option>
+                <option value="credits">Credits (high first)</option>
+            </select>
+        </div>
+        <div class="col-6 col-lg-3 text-end">
+            <div class="btn-group" role="group" aria-label="View mode">
+                <button type="button" class="btn btn-outline-primary active" id="gridBtn" title="Grid view"><i class="bi bi-grid-3x3-gap-fill"></i></button>
+                <button type="button" class="btn btn-outline-primary" id="listBtn" title="List view"><i class="bi bi-list-ul"></i></button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Filter chips are built by JavaScript -->
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4" id="chipRow">
+    <span class="small text-body-secondary me-1"><i class="bi bi-funnel me-1"></i>Filter:</span>
+    <button type="button" class="btn btn-sm btn-primary chip-filter" data-credits="all">All</button>
+    <button type="button" class="btn btn-sm btn-outline-warning chip-filter ms-auto" id="savedOnly"><i class="bi bi-star-fill me-1"></i>Saved only (<span id="savedCount">0</span>)</button>
+</div>
+
+{% if query %}
+<div class="alert alert-info d-flex align-items-center gap-2 rounded-xl">
+    <i class="bi bi-funnel-fill"></i>
+    <div>Showing results for <strong>"{{ query }}"</strong>. <a href="{% url 'catalog:course_list' %}" class="alert-link">Show all courses</a></div>
+</div>
+{% endif %}
+
+<div class="row" id="courseGrid">
+    {% for course in courses %}
+    <div class="col-md-4 mb-4 course-col reveal"
+         data-search="{{ course.code|lower }} {{ course.title|lower }}"
+         data-title="{{ course.title|lower }}" data-code="{{ course.code }}"
+         data-credits="{{ course.credits }}" data-order="{{ forloop.counter }}">
+        <div class="card course-card card-hover h-100 shadow-sm border-0" data-tilt>
+            <div class="course-banner {% cycle 'c1' 'c2' 'c0' %}"></div>
+            <div class="card-header bg-transparent border-bottom-0 pt-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis mb-2">{{ course.code }}</span>
+                    <button type="button" class="save-btn" data-code="{{ course.code }}" title="Save this course"><i class="bi bi-star"></i></button>
+                </div>
+                <h5 class="card-title fw-bold text-primary course-title">{{ course.title }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text text-body-secondary small">{{ course.description }}</p>
+                <div class="border-top pt-2 mt-3">
+                    <small class="d-block text-body-secondary"><i class="bi bi-award me-1"></i><strong>Credits:</strong> {{ course.credits }} Credits</small>
+                    <small class="d-block text-body-secondary"><i class="bi bi-person-badge me-1"></i><strong>Instructor:</strong> {{ course.instructor }}</small>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pb-3">
+                <a href="{% url 'catalog:course_detail' course.id %}" class="btn btn-brand w-100 rounded-pill">View Course Detail <i class="bi bi-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-warning rounded-xl">
+            {% if query %}No courses match "{{ query }}".{% else %}No courses are currently listed in the catalog.{% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="noResults" class="text-center py-5 d-none">
+    <i class="bi bi-emoji-frown display-3 text-body-secondary"></i>
+    <h5 class="mt-3 fw-bold">No matching courses</h5>
+    <p class="text-body-secondary">Try a different keyword or reset the filters.</p>
+    <button type="button" class="btn btn-outline-primary rounded-pill" id="resetFilters">Reset filters</button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        var grid = document.getElementById('courseGrid');
+        var input = document.getElementById('liveSearch');
+        var cols = Array.prototype.slice.call(grid.querySelectorAll('.course-col'));
+        var countEl = document.getElementById('countNum');
+        var noRes = document.getElementById('noResults');
+        var chipRow = document.getElementById('chipRow');
+        var savedBtn = document.getElementById('savedOnly');
+        var activeCredits = 'all', savedOnly = false, saved = [];
+
+        try { saved = JSON.parse(localStorage.getItem('cp-saved') || '[]'); } catch (e) { saved = []; }
+        function persist() { try { localStorage.setItem('cp-saved', JSON.stringify(saved)); } catch (e) {} }
+
+        // Build credit chips from the data
+        var creditSet = {};
+        cols.forEach(function (c) { creditSet[c.dataset.credits] = true; });
+        Object.keys(creditSet).sort(function (a, b) { return a - b; }).forEach(function (cr) {
+            var b = document.createElement('button');
+            b.type = 'button'; b.className = 'btn btn-sm btn-outline-primary chip-filter';
+            b.dataset.credits = cr; b.textContent = cr + ' credits';
+            chipRow.insertBefore(b, savedBtn);
+        });
+        chipRow.addEventListener('click', function (e) {
+            var b = e.target.closest('[data-credits]');
+            if (!b) return;
+            activeCredits = b.dataset.credits;
+            chipRow.querySelectorAll('[data-credits]').forEach(function (x) {
+                var on = x === b;
+                x.classList.toggle('btn-primary', on);
+                x.classList.toggle('btn-outline-primary', !on);
+            });
+            applyFilter();
+        });
+
+        function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+        function highlight(el, term) {
+            var text = el.textContent;
+            var i = term ? text.toLowerCase().indexOf(term) : -1;
+            el.innerHTML = i < 0 ? esc(text) :
+                esc(text.slice(0, i)) + '<mark class="hl">' + esc(text.slice(i, i + term.length)) + '</mark>' + esc(text.slice(i + term.length));
+        }
+
+        function refreshSaved() {
+            grid.querySelectorAll('.save-btn').forEach(function (b) {
+                var on = saved.indexOf(b.dataset.code) !== -1;
+                b.classList.toggle('saved', on);
+                b.firstElementChild.className = on ? 'bi bi-star-fill' : 'bi bi-star';
+            });
+            document.getElementById('savedCount').textContent = saved.length;
+        }
+
+        function applyFilter() {
+            var term = input.value.trim().toLowerCase(), shown = 0;
+            cols.forEach(function (c) {
+                var match = (!term || c.dataset.search.indexOf(term) !== -1) &&
+                            (activeCredits === 'all' || c.dataset.credits === activeCredits) &&
+                            (!savedOnly || saved.indexOf(c.dataset.code) !== -1);
+                var wasHidden = c.classList.contains('d-none');
+                c.classList.toggle('d-none', !match);
+                if (match && wasHidden) { c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }
+                if (match) shown++;
+                highlight(c.querySelector('.course-title'), term);
+            });
+            countEl.textContent = shown;
+            noRes.classList.toggle('d-none', shown !== 0 || cols.length === 0);
+        }
+        input.addEventListener('input', applyFilter);
+
+        grid.addEventListener('click', function (e) {
+            var b = e.target.closest('.save-btn');
+            if (!b) return;
+            var code = b.dataset.code, i = saved.indexOf(code);
+            if (i === -1) { saved.push(code); showToast(code + ' saved to your list', 'success'); }
+            else { saved.splice(i, 1); showToast(code + ' removed from your list', 'info'); }
+            persist(); refreshSaved();
+            if (savedOnly) applyFilter();
+        });
+
+        savedBtn.addEventListener('click', function () {
+            savedOnly = !savedOnly;
+            savedBtn.classList.toggle('btn-warning', savedOnly);
+            savedBtn.classList.toggle('btn-outline-warning', !savedOnly);
+            applyFilter();
+        });
+
+        document.getElementById('sortSelect').addEventListener('change', function () {
+            var mode = this.value;
+            cols.sort(function (a, b) {
+                if (mode === 'title') return a.dataset.title.localeCompare(b.dataset.title);
+                if (mode === 'code') return a.dataset.code.localeCompare(b.dataset.code);
+                if (mode === 'credits') return b.dataset.credits - a.dataset.credits;
+                return a.dataset.order - b.dataset.order;
+            }).forEach(function (c) { grid.appendChild(c); });
+        });
+
+        var gridBtn = document.getElementById('gridBtn'), listBtn = document.getElementById('listBtn');
+        function setView(list) {
+            grid.classList.toggle('list-view', list);
+            listBtn.classList.toggle('active', list);
+            gridBtn.classList.toggle('active', !list);
+        }
+        gridBtn.addEventListener('click', function () { setView(false); });
+        listBtn.addEventListener('click', function () { setView(true); });
+
+        document.getElementById('resetFilters').addEventListener('click', function () {
+            input.value = ''; activeCredits = 'all'; savedOnly = false;
+            savedBtn.classList.remove('btn-warning'); savedBtn.classList.add('btn-outline-warning');
+            chipRow.querySelectorAll('[data-credits]').forEach(function (x) {
+                var on = x.dataset.credits === 'all';
+                x.classList.toggle('btn-primary', on); x.classList.toggle('btn-outline-primary', !on);
+            });
+            applyFilter();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            var tag = document.activeElement.tagName;
+            if (e.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') { e.preventDefault(); input.focus(); }
+        });
+
+        refreshSaved();
+        applyFilter();
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IT Course Portal{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        try {
+            var t = localStorage.getItem('cp-theme');
+            if (t) document.documentElement.setAttribute('data-bs-theme', t);
+        } catch (e) {}
+    </script>
+
+    <style>
+        :root {
+            --cp-a: #6366f1;
+            --cp-b: #8b5cf6;
+            --cp-c: #06b6d4;
+            --cp-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #06b6d4 100%);
+            --cp-radius: 1.1rem;
+        }
+        body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; position: relative; }
+        [data-bs-theme="light"] body { background: #f5f7ff; }
+        [data-bs-theme="dark"] body { background: #0b0e1a; }
+
+        /* Soft animated background blobs */
+        body::before, body::after {
+            content: ""; position: fixed; z-index: -1; border-radius: 50%; filter: blur(90px); opacity: .35;
+            animation: drift 18s ease-in-out infinite alternate;
+        }
+        body::before { width: 420px; height: 420px; background: var(--cp-a); top: -120px; left: -100px; }
+        body::after  { width: 380px; height: 380px; background: var(--cp-c); bottom: -120px; right: -80px; animation-delay: -6s; }
+        [data-bs-theme="dark"] body::before, [data-bs-theme="dark"] body::after { opacity: .18; }
+        @keyframes drift { to { transform: translate(60px, 40px) scale(1.15); } }
+
+        .bg-brand { background: var(--cp-grad); }
+        .text-brand { background: var(--cp-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .rounded-xl { border-radius: var(--cp-radius) !important; }
+        .btn-brand { background: var(--cp-grad); color: #fff; border: 0; font-weight: 600; }
+        .btn-brand:hover { color: #fff; filter: brightness(1.08); transform: translateY(-1px); }
+
+        /* Scroll progress */
+        #progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--cp-grad); z-index: 2000; }
+
+        /* Glass navbar */
+        .navbar-glass {
+            background: rgba(255,255,255,.72); backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(99,102,241,.15);
+        }
+        [data-bs-theme="dark"] .navbar-glass { background: rgba(11,14,26,.72); border-bottom-color: rgba(255,255,255,.08); }
+        .navbar-glass .nav-link { font-weight: 600; border-radius: .6rem; padding: .5rem .95rem !important; color: var(--bs-body-color); transition: background .2s, color .2s; }
+        .navbar-glass .nav-link:hover { background: rgba(99,102,241,.1); }
+        .navbar-glass .nav-link.active { background: var(--cp-grad); color: #fff; }
+        .brand-mark { width: 38px; height: 38px; border-radius: .8rem; display: inline-flex; align-items: center; justify-content: center; color: #fff; background: var(--cp-grad); }
+        kbd.kbd-hint { font-size: .7rem; background: rgba(99,102,241,.12); color: var(--bs-body-color); border: 1px solid rgba(99,102,241,.25); }
+
+        .card-hover { transition: transform .3s ease, box-shadow .3s ease; border-radius: var(--cp-radius); }
+        .card-hover:hover { box-shadow: 0 1.2rem 2.4rem rgba(99,102,241,.22) !important; }
+        [data-tilt] { transition: transform .15s ease-out; transform-style: preserve-3d; will-change: transform; }
+
+        .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; }
+        .reveal.visible { opacity: 1; transform: none; }
+
+        #toTop { position: fixed; right: 1.25rem; bottom: 1.25rem; width: 46px; height: 46px; border-radius: 50%; border: 0; color: #fff; background: var(--cp-grad); box-shadow: 0 .5rem 1.2rem rgba(0,0,0,.25); display: none; z-index: 1030; }
+        #toTop.show { display: block; }
+
+        footer.site-footer { background: #0f1226; color: #cbd5e1; }
+        footer.site-footer a { color: #cbd5e1; text-decoration: none; }
+        footer.site-footer a:hover { color: #fff; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div id="progress"></div>
+
+    {% with current=request.resolver_match.url_name %}
+    <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'catalog:home' %}">
+                <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
+                <span>DTI <span class="text-brand">CoursePortal</span></span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1 mt-3 mt-lg-0">
+                    <li class="nav-item"><a class="nav-link {% if current == 'home' %}active{% endif %}" href="{% url 'catalog:home' %}"><i class="bi bi-house-door me-1"></i>Home</a></li>
+                    <li class="nav-item"><a class="nav-link {% if current == 'course_list' or current == 'course_detail' %}active{% endif %}" href="{% url 'catalog:course_list' %}"><i class="bi bi-journal-bookmark me-1"></i>Courses</a></li>
+                    <li class="nav-item"><a class="nav-link {% if current == 'inquiry' %}active{% endif %}" href="{% url 'catalog:inquiry' %}"><i class="bi bi-chat-dots me-1"></i>Inquiry</a></li>
+                    <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
+                            <i class="bi bi-search me-1"></i>Search <kbd class="kbd-hint ms-1">Ctrl K</kbd>
+                        </button>
+                    </li>
+                    <li class="nav-item ms-lg-1 mt-2 mt-lg-0">
+                        <button id="themeToggle" class="btn btn-sm btn-outline-secondary rounded-circle" style="width:36px;height:36px" type="button" title="Toggle dark mode">
+                            <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endwith %}
+
+    <!-- Quick search modal (Ctrl/Cmd + K) -->
+    <div class="modal fade" id="searchModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-xl border-0 shadow-lg">
+                <form method="GET" action="{% url 'catalog:course_list' %}" class="p-3">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text border-0 bg-transparent"><i class="bi bi-search text-primary"></i></span>
+                        <input type="text" name="q" id="modalSearch" class="form-control border-0 shadow-none" placeholder="Search courses by title or code..." autocomplete="off">
+                        <button class="btn btn-brand rounded-3 px-4" type="submit">Go</button>
+                    </div>
+                    <div class="small text-body-secondary mt-2 px-2">Try <strong>DTI412</strong>, <strong>database</strong> or <strong>react</strong>. Press Esc to close.</div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <main class="container my-4 my-md-5 flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer pt-5 pb-4 mt-auto">
+        <div class="container">
+            <div class="row g-4 mb-4">
+                <div class="col-md-5">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
+                        <strong class="text-white fs-5">DTI CoursePortal</strong>
+                    </div>
+                    <p class="small mb-0">Browse IT courses, read syllabus details and send questions to instructors, all in one place.</p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h6 class="text-white text-uppercase small fw-bold">Explore</h6>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-1"><a href="{% url 'catalog:home' %}">Home</a></li>
+                        <li class="mb-1"><a href="{% url 'catalog:course_list' %}">All courses</a></li>
+                        <li class="mb-1"><a href="{% url 'catalog:inquiry' %}">Submit an inquiry</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-md-4">
+                    <h6 class="text-white text-uppercase small fw-bold">Tips</h6>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-1"><kbd class="kbd-hint">Ctrl K</kbd> quick search</li>
+                        <li class="mb-1"><kbd class="kbd-hint">/</kbd> focus course filter</li>
+                        <li class="mb-1">Use the moon icon for dark mode</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-top border-secondary-subtle pt-3 small text-center text-md-start">
+                &copy; 2026 Department of Information Technology. DTI412 Web Development.
+            </div>
+        </div>
+    </footer>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:2100" id="toastBox"></div>
+    <button id="toTop" type="button" aria-label="Back to top"><i class="bi bi-arrow-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showToast(message, type) {
+            type = type || 'success';
+            var icons = { success: 'check-circle-fill', danger: 'exclamation-triangle-fill', info: 'info-circle-fill' };
+            var el = document.createElement('div');
+            el.className = 'toast align-items-center text-bg-' + type + ' border-0 shadow';
+            el.setAttribute('role', 'alert');
+            el.innerHTML = '<div class="d-flex"><div class="toast-body"><i class="bi bi-' + (icons[type] || icons.info) + ' me-2"></i><span></span></div>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
+            el.querySelector('span').textContent = message;
+            document.getElementById('toastBox').appendChild(el);
+            var t = new bootstrap.Toast(el, { delay: 3200 });
+            t.show();
+            el.addEventListener('hidden.bs.toast', function () { el.remove(); });
+        }
+
+        // Theme toggle
+        (function () {
+            var root = document.documentElement, icon = document.getElementById('themeIcon');
+            function sync() { icon.className = root.getAttribute('data-bs-theme') === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill'; }
+            sync();
+            document.getElementById('themeToggle').addEventListener('click', function () {
+                var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-bs-theme', next);
+                try { localStorage.setItem('cp-theme', next); } catch (e) {}
+                sync();
+            });
+        })();
+
+        // Reveal on scroll
+        (function () {
+            var items = document.querySelectorAll('.reveal');
+            if (!('IntersectionObserver' in window)) { items.forEach(function (i) { i.classList.add('visible'); }); return; }
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+            }, { threshold: 0.1 });
+            items.forEach(function (i, idx) { i.style.transitionDelay = (idx % 4) * 90 + 'ms'; io.observe(i); });
+        })();
+
+        // Scroll progress + back to top
+        (function () {
+            var bar = document.getElementById('progress'), b = document.getElementById('toTop');
+            window.addEventListener('scroll', function () {
+                var h = document.documentElement.scrollHeight - window.innerHeight;
+                bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+                b.classList.toggle('show', window.scrollY > 300);
+            });
+            b.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        })();
+
+        // 3D tilt on [data-tilt]
+        (function () {
+            if (window.matchMedia('(pointer: coarse)').matches) return;
+            document.querySelectorAll('[data-tilt]').forEach(function (el) {
+                el.addEventListener('mousemove', function (e) {
+                    var r = el.getBoundingClientRect();
+                    var x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+                    el.style.transform = 'perspective(900px) rotateY(' + (x * 8) + 'deg) rotateX(' + (-y * 8) + 'deg) translateY(-4px)';
+                });
+                el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+            });
+        })();
+
+        // Ctrl/Cmd + K quick search
+        (function () {
+            var modalEl = document.getElementById('searchModal');
+            var modal = new bootstrap.Modal(modalEl);
+            document.addEventListener('keydown', function (e) {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); modal.show(); }
+            });
+            modalEl.addEventListener('shown.bs.modal', function () { document.getElementById('modalSearch').focus(); });
+        })();
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

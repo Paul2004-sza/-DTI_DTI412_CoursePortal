@@ -1,0 +1,184 @@
+{% extends 'catalog/base.html' %}
+
+{% block title %}{{ course.code }} - Syllabus Detail{% endblock %}
+
+{% block extra_head %}
+<style>
+    .detail-hero { background: var(--cp-grad); color: #fff; border-radius: 1.25rem; }
+    .sticky-side { position: sticky; top: 90px; }
+    .fact-icon {
+        width: 42px; height: 42px; border-radius: .75rem; display: inline-flex;
+        align-items: center; justify-content: center; background: rgba(79,70,229,.12); color: #4f46e5; font-size: 1.2rem;
+    }
+    .nav-pills .nav-link { border-radius: 2rem; font-weight: 500; }
+    @media print {
+        nav, footer, .no-print, #toTop { display: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="no-print">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'catalog:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'catalog:course_list' %}">Courses</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ course.code }}</li>
+    </ol>
+</nav>
+
+<!-- Hero header -->
+<section class="detail-hero p-4 p-md-5 mb-4 shadow">
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <span class="badge bg-light text-primary fs-6 fw-bold px-3 py-2">{{ course.code }}</span>
+        <span class="badge bg-info text-dark fs-6 px-3 py-2"><i class="bi bi-award me-1"></i>{{ course.credits }} Credits</span>
+    </div>
+    <h1 class="fw-bold mb-3">{{ course.title }}</h1>
+    <p class="mb-0 opacity-75"><i class="bi bi-person-badge me-2"></i>{{ course.instructor }}</p>
+</section>
+
+<div class="row g-4">
+    <!-- Main column -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-xl">
+            <div class="card-body p-4">
+
+                <ul class="nav nav-pills mb-4 gap-1 no-print" id="detailTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-overview" type="button" role="tab">
+                            <i class="bi bi-info-circle me-1"></i>Overview
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-details" type="button" role="tab">
+                            <i class="bi bi-list-check me-1"></i>Details
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-faq" type="button" role="tab">
+                            <i class="bi bi-question-circle me-1"></i>FAQ
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- Overview -->
+                    <div class="tab-pane fade show active" id="tab-overview" role="tabpanel">
+                        <h5 class="fw-bold text-body-secondary">Course Overview &amp; Description</h5>
+                        <p class="lead mt-2">{{ course.description }}</p>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="tab-pane fade" id="tab-details" role="tabpanel">
+                        <h5 class="fw-bold text-body-secondary mb-3">Course Details</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between px-0"><span class="text-body-secondary">Course Code</span><strong>{{ course.code }}</strong></li>
+                            <li class="list-group-item d-flex justify-content-between px-0"><span class="text-body-secondary">Title</span><strong class="text-end">{{ course.title }}</strong></li>
+                            <li class="list-group-item d-flex justify-content-between px-0"><span class="text-body-secondary">Credits</span><strong>{{ course.credits }}</strong></li>
+                            <li class="list-group-item d-flex justify-content-between px-0"><span class="text-body-secondary">Assigned Instructor</span><strong>{{ course.instructor }}</strong></li>
+                        </ul>
+                    </div>
+
+                    <!-- FAQ -->
+                    <div class="tab-pane fade" id="tab-faq" role="tabpanel">
+                        <div class="accordion accordion-flush" id="faqAcc">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#f1">How do I ask about {{ course.code }}?</button>
+                                </h2>
+                                <div id="f1" class="accordion-collapse collapse show" data-bs-parent="#faqAcc">
+                                    <div class="accordion-body">Use the <strong>Ask a Question</strong> button. The inquiry form will open with this course already selected.</div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f2">Who teaches this course?</button>
+                                </h2>
+                                <div id="f2" class="accordion-collapse collapse" data-bs-parent="#faqAcc">
+                                    <div class="accordion-body">The assigned instructor is <strong>{{ course.instructor }}</strong>.</div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f3">How many credits is it worth?</button>
+                                </h2>
+                                <div id="f3" class="accordion-collapse collapse" data-bs-parent="#faqAcc">
+                                    <div class="accordion-body">{{ course.code }} carries <strong>{{ course.credits }} credits</strong>.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4 no-print">
+                <div class="d-flex flex-wrap gap-2 no-print">
+                    <a href="{% url 'catalog:inquiry' %}?course={{ course.code }}" class="btn btn-success rounded-pill px-4">
+                        <i class="bi bi-chat-dots me-1"></i>Submit Question for Course
+                    </a>
+                    <a href="{% url 'catalog:course_list' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Course Catalog
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-xl sticky-side">
+            <div class="card-body p-4">
+                <h6 class="fw-bold text-uppercase text-body-secondary small mb-3">Quick Facts</h6>
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="fact-icon"><i class="bi bi-hash"></i></span>
+                    <div><div class="small text-body-secondary">Course code</div><strong>{{ course.code }}</strong></div>
+                </div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="fact-icon"><i class="bi bi-award"></i></span>
+                    <div><div class="small text-body-secondary">Credits</div><strong>{{ course.credits }}</strong></div>
+                </div>
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="fact-icon"><i class="bi bi-person-badge"></i></span>
+                    <div><div class="small text-body-secondary">Instructor</div><strong>{{ course.instructor }}</strong></div>
+                </div>
+
+                <div class="d-grid gap-2 no-print">
+                    <button type="button" class="btn btn-outline-primary" id="copyCode" data-code="{{ course.code }}">
+                        <i class="bi bi-clipboard me-1"></i>Copy course code
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="copyLink">
+                        <i class="bi bi-link-45deg me-1"></i>Copy page link
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i>Print syllabus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function copyText(text, okMsg) {
+        function ok() { showToast(okMsg, 'success'); }
+        function fail() { showToast('Copy failed. Please copy manually.', 'danger'); }
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(ok, fail);
+        } else {
+            var ta = document.createElement('textarea');
+            ta.value = text; document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy') ? ok() : fail(); } catch (e) { fail(); }
+            ta.remove();
+        }
+    }
+    document.getElementById('copyCode').addEventListener('click', function () {
+        copyText(this.dataset.code, 'Course code copied: ' + this.dataset.code);
+    });
+    document.getElementById('copyLink').addEventListener('click', function () {
+        copyText(window.location.href, 'Page link copied to clipboard');
+    });
+</script>
+{% endblock %}

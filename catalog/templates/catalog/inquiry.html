@@ -1,0 +1,302 @@
+{% extends 'catalog/base.html' %}
+
+{% block title %}Submit Inquiry - DTI CoursePortal{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-hero { background: var(--cp-grad); color: #fff; border-radius: 1.25rem 1.25rem 0 0; position: relative; overflow: hidden; }
+    .form-hero::after { content: ""; position: absolute; width: 220px; height: 220px; right: -60px; top: -90px; border-radius: 50%; background: rgba(255,255,255,.14); }
+    .form-hero > * { position: relative; z-index: 1; }
+
+    /* Stepper */
+    .stepper { display: flex; align-items: center; justify-content: space-between; position: relative; margin-bottom: 1.75rem; }
+    .stepper::before { content: ""; position: absolute; left: 20px; right: 20px; top: 19px; height: 4px; background: rgba(99,102,241,.18); border-radius: 4px; }
+    .stepper .fill { position: absolute; left: 20px; top: 19px; height: 4px; width: 0; background: var(--cp-grad); border-radius: 4px; transition: width .4s ease; }
+    .step-dot { position: relative; z-index: 1; text-align: center; width: 90px; }
+    .step-dot .dot { width: 42px; height: 42px; border-radius: 50%; margin: 0 auto .35rem; display: flex; align-items: center; justify-content: center; font-weight: 700; background: var(--bs-body-bg); border: 3px solid rgba(99,102,241,.3); color: var(--bs-secondary-color); transition: all .3s; }
+    .step-dot.active .dot { border-color: #6366f1; color: #6366f1; transform: scale(1.12); box-shadow: 0 0 0 6px rgba(99,102,241,.15); }
+    .step-dot.done .dot { background: var(--cp-grad); border-color: transparent; color: #fff; }
+    .step-dot small { font-weight: 600; color: var(--bs-secondary-color); }
+    .step-dot.active small { color: #6366f1; }
+
+    .pane { display: none; }
+    .pane.show-pane { display: block; animation: slideIn .4s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
+
+    .chip { cursor: pointer; transition: all .2s; }
+    .chip:hover { background: #6366f1 !important; color: #fff !important; transform: translateY(-2px); }
+
+    .review-row { display: flex; gap: 1rem; padding: .7rem 0; border-bottom: 1px dashed rgba(99,102,241,.25); }
+    .review-row:last-child { border-bottom: 0; }
+    .review-row .k { width: 90px; flex-shrink: 0; color: var(--bs-secondary-color); }
+    .review-row .v { font-weight: 600; word-break: break-word; white-space: pre-wrap; }
+
+    .check-circle { width: 96px; height: 96px; }
+    .check-circle circle { stroke: #198754; stroke-width: 4; fill: none; stroke-dasharray: 260; stroke-dashoffset: 260; animation: draw .7s ease forwards; }
+    .check-circle path { stroke: #198754; stroke-width: 5; fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 60; stroke-dashoffset: 60; animation: draw .5s .6s ease forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+
+    .confetti { position: fixed; top: -20px; width: 10px; height: 16px; opacity: .9; z-index: 2200; pointer-events: none; animation: fall linear forwards; }
+    @keyframes fall { to { transform: translateY(105vh) rotate(720deg); opacity: .9; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-lg rounded-xl">
+            <div class="form-hero p-4">
+                <h2 class="fw-bold mb-1"><i class="bi bi-chat-dots me-2"></i>Course Inquiry</h2>
+                <p class="mb-0 opacity-75">Three quick steps. Ask about prerequisites, schedules or grading.</p>
+            </div>
+
+            <div class="card-body p-4">
+
+                {% if errors %}
+                <div class="alert alert-danger rounded-xl" role="alert">
+                    <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>Form Submission Errors:</h6>
+                    <ul class="mb-0">
+                        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if submitted_data %}
+                <div class="text-center py-3">
+                    <svg class="check-circle mb-3" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="41"></circle>
+                        <path d="M30 52 L45 67 L72 36"></path>
+                    </svg>
+                    <h3 class="fw-bold text-success">Inquiry Processed Successfully!</h3>
+                    <p class="text-body-secondary">Thank you, <strong>{{ submitted_data.student_name }}</strong>. Your inquiry has been submitted.</p>
+                </div>
+
+                <div class="bg-body-tertiary rounded-xl p-3 mb-4">
+                    <h6 class="fw-bold text-uppercase small text-body-secondary mb-2">Your submission</h6>
+                    <div class="review-row"><div class="k">Name</div><div class="v">{{ submitted_data.student_name }}</div></div>
+                    <div class="review-row"><div class="k">Email</div><div class="v">{{ submitted_data.email }}</div></div>
+                    <div class="review-row"><div class="k">Course</div><div class="v">{% if submitted_data.course_code %}{{ submitted_data.course_code }}{% else %}General inquiry{% endif %}</div></div>
+                    <div class="review-row"><div class="k">Message</div><div class="v">{{ submitted_data.message }}</div></div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                    <a href="{% url 'catalog:inquiry' %}" class="btn btn-brand rounded-pill px-4"><i class="bi bi-plus-circle me-1"></i>Send another inquiry</a>
+                    <a href="{% url 'catalog:course_list' %}" class="btn btn-outline-secondary rounded-pill px-4">Browse courses</a>
+                </div>
+
+                {% else %}
+                {% firstof request.POST.course_code request.GET.course as chosen %}
+
+                <div class="stepper" id="stepper">
+                    <div class="fill" id="stepFill"></div>
+                    <div class="step-dot active" data-step="1"><div class="dot">1</div><small>About you</small></div>
+                    <div class="step-dot" data-step="2"><div class="dot">2</div><small>Question</small></div>
+                    <div class="step-dot" data-step="3"><div class="dot">3</div><small>Review</small></div>
+                </div>
+
+                <form method="POST" action="{% url 'catalog:inquiry' %}" id="inquiryForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Step 1 -->
+                    <div class="pane show-pane" data-pane="1">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="student_name" name="student_name" required placeholder="Full name" value="{{ request.POST.student_name }}">
+                            <label for="student_name"><i class="bi bi-person me-1"></i>Full Name <span class="text-danger">*</span></label>
+                            <div class="invalid-feedback">Please enter your full name.</div>
+                        </div>
+                        <div class="form-floating mb-4">
+                            <input type="email" class="form-control" id="email" name="email" required placeholder="student@example.com" value="{{ request.POST.email }}">
+                            <label for="email"><i class="bi bi-envelope me-1"></i>Email Address <span class="text-danger">*</span></label>
+                            <div class="invalid-feedback">Please enter a valid email address.</div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'catalog:home' %}" class="btn btn-link text-body-secondary">Cancel</a>
+                            <button type="button" class="btn btn-brand rounded-pill px-4 js-next">Next <i class="bi bi-arrow-right ms-1"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="pane" data-pane="2">
+                        <div class="form-floating mb-3">
+                            <select class="form-select" id="course_code" name="course_code">
+                                <option value="">General inquiry</option>
+                                {% for course in courses %}
+                                <option value="{{ course.code }}" {% if chosen == course.code %}selected{% endif %}>{{ course.code }} - {{ course.title }}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="course_code"><i class="bi bi-journal-bookmark me-1"></i>Related Course</label>
+                        </div>
+
+                        <div class="mb-2">
+                            <span class="small text-body-secondary me-1">Quick start:</span>
+                            <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis chip" data-text="What are the prerequisites for this course?">Prerequisites</span>
+                            <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis chip" data-text="What is the class schedule and room for this course?">Schedule</span>
+                            <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis chip" data-text="How is this course graded and what are the main assessments?">Grading</span>
+                        </div>
+
+                        <div class="form-floating mb-1">
+                            <textarea class="form-control" id="message" name="message" required maxlength="500" placeholder="Your message" style="height: 150px">{{ request.POST.message }}</textarea>
+                            <label for="message"><i class="bi bi-pencil-square me-1"></i>Inquiry Message <span class="text-danger">*</span></label>
+                            <div class="invalid-feedback">Please write your question.</div>
+                        </div>
+                        <div class="mb-1">
+                            <div class="progress" style="height:5px"><div class="progress-bar" id="meter" style="width:0%"></div></div>
+                        </div>
+                        <div class="d-flex justify-content-end mb-4"><small id="counter" class="text-body-secondary">0 / 500</small></div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 js-back"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                            <button type="button" class="btn btn-brand rounded-pill px-4 js-next">Review <i class="bi bi-arrow-right ms-1"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="pane" data-pane="3">
+                        <h5 class="fw-bold mb-3">Check your details</h5>
+                        <div class="bg-body-tertiary rounded-xl px-3 py-2 mb-4">
+                            <div class="review-row"><div class="k">Name</div><div class="v" id="rvName"></div></div>
+                            <div class="review-row"><div class="k">Email</div><div class="v" id="rvEmail"></div></div>
+                            <div class="review-row"><div class="k">Course</div><div class="v" id="rvCourse"></div></div>
+                            <div class="review-row"><div class="k">Message</div><div class="v" id="rvMessage"></div></div>
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-between gap-2">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 js-back"><i class="bi bi-arrow-left me-1"></i>Edit</button>
+                            <button type="submit" class="btn btn-brand rounded-pill px-4" id="submitBtn">
+                                <span class="spinner-border spinner-border-sm d-none me-2" id="spin"></span>
+                                <i class="bi bi-send me-1" id="sendIcon"></i><span id="submitText">Submit Inquiry</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    {% if submitted_data %}
+    showToast('Inquiry submitted successfully!', 'success');
+    (function () {
+        var colors = ['#6366f1', '#8b5cf6', '#06b6d4', '#f59e0b', '#22c55e', '#ef4444'];
+        for (var i = 0; i < 70; i++) {
+            var c = document.createElement('span');
+            c.className = 'confetti';
+            c.style.left = Math.random() * 100 + 'vw';
+            c.style.background = colors[i % colors.length];
+            c.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+            c.style.animationDelay = (Math.random() * 0.8) + 's';
+            c.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+            document.body.appendChild(c);
+            setTimeout(function (el) { el.remove(); }.bind(null, c), 6000);
+        }
+    })();
+    {% elif errors %}
+    showToast('Please fix the errors and try again.', 'danger');
+    {% endif %}
+
+    (function () {
+        var form = document.getElementById('inquiryForm');
+        if (!form) return;
+        var step = 1, total = 3;
+        var panes = form.querySelectorAll('.pane');
+        var dots = document.querySelectorAll('#stepper .step-dot');
+        var fill = document.getElementById('stepFill');
+        var msg = document.getElementById('message');
+        var counter = document.getElementById('counter');
+        var meter = document.getElementById('meter');
+
+        function check(el) {
+            var ok = el.value.trim() !== '' && el.checkValidity();
+            el.classList.toggle('is-valid', ok);
+            el.classList.toggle('is-invalid', !ok);
+            return ok;
+        }
+        function validatePane(n) {
+            var ok = true, firstBad = null;
+            form.querySelector('[data-pane="' + n + '"]').querySelectorAll('input[required], textarea[required]').forEach(function (el) {
+                if (!check(el)) { ok = false; if (!firstBad) firstBad = el; }
+            });
+            if (firstBad) firstBad.focus();
+            return ok;
+        }
+
+        function fillReview() {
+            var sel = document.getElementById('course_code');
+            document.getElementById('rvName').textContent = document.getElementById('student_name').value.trim();
+            document.getElementById('rvEmail').textContent = document.getElementById('email').value.trim();
+            document.getElementById('rvCourse').textContent = sel.value ? sel.options[sel.selectedIndex].text : 'General inquiry';
+            document.getElementById('rvMessage').textContent = msg.value.trim();
+        }
+
+        function go(n) {
+            step = n;
+            panes.forEach(function (p) { p.classList.toggle('show-pane', parseInt(p.dataset.pane, 10) === n); });
+            dots.forEach(function (d) {
+                var i = parseInt(d.dataset.step, 10);
+                d.classList.toggle('active', i === n);
+                d.classList.toggle('done', i < n);
+                d.querySelector('.dot').innerHTML = i < n ? '<i class="bi bi-check-lg"></i>' : i;
+            });
+            fill.style.width = 'calc((100% - 40px) * ' + ((n - 1) / (total - 1)) + ')';
+            if (n === 3) fillReview();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        form.querySelectorAll('.js-next').forEach(function (b) {
+            b.addEventListener('click', function () {
+                if (validatePane(step)) go(step + 1);
+                else showToast('Please complete the required fields.', 'danger');
+            });
+        });
+        form.querySelectorAll('.js-back').forEach(function (b) { b.addEventListener('click', function () { go(step - 1); }); });
+
+        // Enter moves forward instead of submitting early
+        form.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                if (step < total) form.querySelector('[data-pane="' + step + '"] .js-next').click();
+            }
+        });
+
+        // Live validation
+        form.querySelectorAll('input[required], textarea[required]').forEach(function (el) {
+            el.addEventListener('blur', function () { el.value = el.value.trim(); if (el.value) check(el); });
+            el.addEventListener('input', function () { if (el.classList.contains('is-invalid') || el.classList.contains('is-valid')) check(el); });
+        });
+
+        // Counter + meter
+        function updateCounter() {
+            var n = msg.value.length;
+            counter.textContent = n + ' / 500';
+            counter.className = n > 450 ? 'text-danger fw-semibold' : 'text-body-secondary';
+            meter.style.width = (n / 5) + '%';
+            meter.className = 'progress-bar ' + (n > 450 ? 'bg-danger' : n > 300 ? 'bg-warning' : 'bg-primary');
+        }
+        msg.addEventListener('input', updateCounter);
+        updateCounter();
+
+        // Quick-start chips
+        document.querySelectorAll('.chip').forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                msg.value = chip.dataset.text; msg.focus(); updateCounter(); msg.classList.remove('is-invalid');
+            });
+        });
+
+        // Final submit
+        form.addEventListener('submit', function (e) {
+            if (!validatePane(1)) { e.preventDefault(); go(1); return; }
+            if (!validatePane(2)) { e.preventDefault(); go(2); return; }
+            document.getElementById('spin').classList.remove('d-none');
+            document.getElementById('sendIcon').classList.add('d-none');
+            document.getElementById('submitText').textContent = 'Sending...';
+            document.getElementById('submitBtn').classList.add('disabled');
+        });
+
+        go(1);
+    })();
+</script>
+{% endblock %}

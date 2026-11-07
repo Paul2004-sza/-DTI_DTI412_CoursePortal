@@ -1,0 +1,168 @@
+{% extends 'catalog/base.html' %}
+
+{% block title %}Home - DTI CoursePortal{% endblock %}
+
+{% block extra_head %}
+<style>
+    .hero { background: var(--cp-grad); color: #fff; border-radius: 1.75rem; position: relative; overflow: hidden; }
+    .hero .orb { position: absolute; border-radius: 50%; background: rgba(255,255,255,.14); }
+    .hero .orb.o1 { width: 340px; height: 340px; top: -130px; right: -90px; }
+    .hero .orb.o2 { width: 190px; height: 190px; bottom: -80px; left: 6%; }
+    .hero > .row { position: relative; z-index: 2; }
+    .typed-word { border-right: 3px solid #fff; padding-right: 4px; animation: blink .8s step-end infinite; }
+    @keyframes blink { 50% { border-color: transparent; } }
+
+    .float-card { position: absolute; background: rgba(255,255,255,.18); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.35); border-radius: 1rem; padding: .8rem 1.1rem; color: #fff; animation: floaty 5s ease-in-out infinite; }
+    .float-card.f1 { top: 8%; right: 14%; }
+    .float-card.f2 { top: 42%; right: 2%; animation-delay: -1.6s; }
+    .float-card.f3 { top: 72%; right: 20%; animation-delay: -3.1s; }
+    @keyframes floaty { 50% { transform: translateY(-14px); } }
+
+    .stat-icon { width: 58px; height: 58px; border-radius: 1rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #fff; }
+
+    .marquee { overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+    .marquee-track { display: inline-flex; gap: .75rem; animation: scroll 28s linear infinite; }
+    .marquee:hover .marquee-track { animation-play-state: paused; }
+    @keyframes scroll { to { transform: translateX(-50%); } }
+    .topic-pill { padding: .55rem 1.1rem; border-radius: 2rem; font-weight: 600; background: var(--bs-body-bg); border: 1px solid rgba(99,102,241,.25); }
+
+    .step-card { transition: transform .3s, box-shadow .3s; }
+    .step-card:hover { transform: translateY(-8px); box-shadow: 0 1rem 2rem rgba(99,102,241,.2); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="hero p-4 p-md-5 mb-5 shadow-lg">
+    <span class="orb o1"></span><span class="orb o2"></span>
+    <div class="row align-items-center">
+        <div class="col-lg-7">
+            <span class="badge rounded-pill bg-white text-primary mb-3 px-3 py-2"><i class="bi bi-stars me-1"></i> IT Department &middot; 2026</span>
+            <h1 class="display-4 fw-bold mb-3">
+                <span id="typed" class="typed-word">Discover</span><br>your next IT course
+            </h1>
+            <p class="fs-5 opacity-75 mb-4">
+                Explore undergraduate courses, review syllabus details, and send questions straight to course instructors.
+            </p>
+
+            <form method="GET" action="{% url 'catalog:course_list' %}" class="mb-4">
+                <div class="input-group input-group-lg shadow">
+                    <span class="input-group-text bg-white border-0"><i class="bi bi-search text-primary"></i></span>
+                    <input type="text" name="q" class="form-control border-0" placeholder="Try DTI412, database or react">
+                    <button class="btn btn-dark px-4" type="submit">Search</button>
+                </div>
+            </form>
+
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'catalog:course_list' %}" class="btn btn-light btn-lg fw-semibold"><i class="bi bi-grid-3x3-gap me-1"></i> Browse Courses</a>
+                <a href="{% url 'catalog:inquiry' %}" class="btn btn-outline-light btn-lg"><i class="bi bi-chat-dots me-1"></i> Ask a Question</a>
+            </div>
+        </div>
+        <div class="col-lg-5 d-none d-lg-block" style="min-height: 340px;">
+            <div class="float-card f1"><i class="bi bi-code-slash me-2"></i>Backend with Django</div>
+            <div class="float-card f2"><i class="bi bi-database me-2"></i>Data modeling</div>
+            <div class="float-card f3"><i class="bi bi-window-stack me-2"></i>Modern frontend</div>
+        </div>
+    </div>
+</section>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-5 reveal">
+        <div class="card card-hover border-0 shadow-sm h-100 text-center" data-tilt>
+            <div class="card-body p-4 d-flex flex-column justify-content-center">
+                <div class="stat-icon bg-brand mx-auto mb-3"><i class="bi bi-journal-richtext"></i></div>
+                <h2 class="display-2 fw-bold text-brand mb-0" id="courseCount" data-count="{{ total_courses }}">0</h2>
+                <p class="text-body-secondary fw-semibold mb-3">Active Courses Offered</p>
+                <div><a href="{% url 'catalog:course_list' %}" class="btn btn-outline-primary rounded-pill px-4">Browse All Courses <i class="bi bi-arrow-right ms-1"></i></a></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7 reveal">
+        <div class="card card-hover border-0 shadow-sm h-100" data-tilt>
+            <div class="card-body p-4">
+                <span class="badge bg-success rounded-pill px-3 py-2 mb-3"><i class="bi bi-star-fill me-1"></i> Featured Subject</span>
+                <h4 class="fw-bold">{{ featured_course.code }}: {{ featured_course.title }}</h4>
+                <p class="text-body-secondary">{{ featured_course.description }}</p>
+                <div class="d-flex flex-wrap gap-3 text-body-secondary small mb-3">
+                    <span><i class="bi bi-award me-1"></i>{{ featured_course.credits }} Credits</span>
+                    <span><i class="bi bi-person-badge me-1"></i>{{ featured_course.instructor }}</span>
+                </div>
+                <a href="{% url 'catalog:course_detail' featured_course.id %}" class="btn btn-success rounded-pill px-4">View Full Syllabus <i class="bi bi-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="fw-bold text-center mb-3 reveal">What you will explore</h3>
+<div class="marquee mb-5 reveal">
+    <div class="marquee-track">
+        {% for i in "12" %}
+        <span class="topic-pill"><i class="bi bi-filetype-py me-1 text-primary"></i>Django</span>
+        <span class="topic-pill"><i class="bi bi-plug me-1 text-primary"></i>RESTful APIs</span>
+        <span class="topic-pill"><i class="bi bi-shield-lock me-1 text-primary"></i>JWT Security</span>
+        <span class="topic-pill"><i class="bi bi-cloud-arrow-up me-1 text-primary"></i>Cloud Deployment</span>
+        <span class="topic-pill"><i class="bi bi-diagram-3 me-1 text-primary"></i>ER Diagrams</span>
+        <span class="topic-pill"><i class="bi bi-database me-1 text-primary"></i>SQL Optimization</span>
+        <span class="topic-pill"><i class="bi bi-filetype-jsx me-1 text-primary"></i>React Components</span>
+        <span class="topic-pill"><i class="bi bi-braces me-1 text-primary"></i>JavaScript ES6+</span>
+        {% endfor %}
+    </div>
+</div>
+
+<h3 class="fw-bold text-center mb-4 reveal">How it works</h3>
+<div class="row g-4 text-center mb-5">
+    <div class="col-md-4 reveal"><div class="step-card p-4 bg-body rounded-xl shadow-sm h-100">
+        <div class="stat-icon mx-auto mb-3" style="background:#6366f1"><i class="bi bi-search"></i></div>
+        <h5 class="fw-bold">1. Discover</h5><p class="text-body-secondary mb-0">Search, filter and sort the catalog instantly to find the right course.</p>
+    </div></div>
+    <div class="col-md-4 reveal"><div class="step-card p-4 bg-body rounded-xl shadow-sm h-100">
+        <div class="stat-icon mx-auto mb-3" style="background:#8b5cf6"><i class="bi bi-file-earmark-text"></i></div>
+        <h5 class="fw-bold">2. Review</h5><p class="text-body-secondary mb-0">Open a course to see its description, credits, instructor and study estimate.</p>
+    </div></div>
+    <div class="col-md-4 reveal"><div class="step-card p-4 bg-body rounded-xl shadow-sm h-100">
+        <div class="stat-icon mx-auto mb-3" style="background:#06b6d4"><i class="bi bi-send"></i></div>
+        <h5 class="fw-bold">3. Ask</h5><p class="text-body-secondary mb-0">Send your question through a guided, validated and CSRF-protected form.</p>
+    </div></div>
+</div>
+
+<section class="bg-brand text-white rounded-xl p-4 p-md-5 text-center shadow reveal">
+    <h3 class="fw-bold mb-2">Still have questions?</h3>
+    <p class="opacity-75 mb-3">Our step-by-step inquiry form takes less than a minute.</p>
+    <a href="{% url 'catalog:inquiry' %}" class="btn btn-light btn-lg fw-semibold rounded-pill px-5"><i class="bi bi-chat-dots me-2"></i>Start an inquiry</a>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Count-up
+    (function () {
+        var el = document.getElementById('courseCount');
+        var target = parseInt(el.dataset.count, 10) || 0, start = null, duration = 1300;
+        function step(ts) {
+            if (!start) start = ts;
+            var p = Math.min((ts - start) / duration, 1);
+            el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+            if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    })();
+
+    // Typing effect
+    (function () {
+        var words = ['Discover', 'Compare', 'Plan', 'Choose'];
+        var el = document.getElementById('typed');
+        var w = 0, c = words[0].length, deleting = true;
+        function tick() {
+            var word = words[w];
+            el.textContent = word.slice(0, c);
+            var delay = deleting ? 55 : 110;
+            if (!deleting && c === word.length) { deleting = true; delay = 1600; }
+            else if (deleting && c === 0) { deleting = false; w = (w + 1) % words.length; delay = 250; }
+            else { c += deleting ? -1 : 1; }
+            setTimeout(tick, delay);
+        }
+        setTimeout(tick, 1800);
+    })();
+</script>
+{% endblock %}
